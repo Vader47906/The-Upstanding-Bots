@@ -1,0 +1,128 @@
+import json
+import os
+import random
+import requests
+import time
+
+from config import *
+from util import mocking_case
+
+class Bot:
+    def __init__(self, bot_id, token=AUTH_TOKEN):
+        self.token = AUTH_TOKEN
+        self.id = bot_id
+
+    def _send_message(self, msg):
+        url = "https://api.groupme.com/v3/bots/post?token="+self.token
+        payload = {'bot_id': self.id,
+                   'text': msg}
+        time.sleep(1)
+        r = requests.post(url, data = json.dumps(payload))
+        if r.status_code != 202:
+            print("Msg sending failed with code: "+str(r.status_code))
+
+    def on_receive_message(self, content):
+        pass
+    
+class MattDavisBot(Bot):    
+    def on_receive_message(self, content):
+        status_msg = "Matt Davis Bot running.\nEnv: {env}\nVersion: {version}".format(env=ENV,
+                                                                                      version=VERSION)
+        generic_choices = ["Relax.",
+                           "Not a big deal.",
+                           "PIGEON.",
+                           "Absolute stallion.",
+                           "-swings imaginary golf club-",
+                           "-tilts head and looks uncomfortable-",
+                           "-sips bourbon and looks dissappointed-",
+                           "Fucking mule.",
+                           "Great job, really adding value for shareholders.",
+                           "One sec, gotta check with the wife.",
+                           "I'm in CIT.",
+                           "You get a fine, you get a fine, you get a fine, EVERYBODY GETS A MOTHERFUCKING FINE."]
+        
+        predefined = {'anime': "That's disgusting.",
+                      'grand prix': "Zeta Tau Alpha presents BMOC is more important than Grand Prix."}
+
+        weed_quote = 'I\'m sending you to rep council.'
+
+        guarenteed_predefined = {'!status': status_msg,
+                                 'weed': weed_quote,
+                                 'room 31': weed_quote,
+                                 'blunt': weed_quote,
+                                 'joint': weed_quote,
+                                 'bong': weed_quote}
+        
+        person_specific = {
+            "39008303" : "Shut up, Jack."
+        }
+
+        predefined_chance = 25
+        generic_chance = 3
+        person_specific_chance = 1
+        mocking_case_chance = 2
+        sender_type = content['sender_type']
+        if sender_type != "user":
+            return
+        msg = content['text']
+        sender_id = content['sender_id']
+        if sender_id == "39008303":
+            return
+        if sender_id in person_specific:
+            print("Found sender in person_specific mapping")
+            if random.randint(0,100) <= person_specific_chance:
+                self._send_message(person_specific[sender_id])
+                return
+        for key in guarenteed_predefined:
+            if key.lower() in msg.lower():
+                self._send_message(guarenteed_predefined[key])
+                return
+
+        if random.randint(0,100) <= mocking_case_chance:
+            self._send_message(mocking_case(msg))
+            return
+    
+        for key in predefined:
+            print("Searching for: "+key)
+            if key.lower() in msg.lower():
+                print("Found: "+key)
+                if random.randint(0,100) <= predefined_chance:
+                    self._send_message(predefined[key])
+                    return
+
+        if random.randint(0,100) <= generic_chance:
+            response_msg = generic_choices[random.randint(0, len(generic_choices)-1)]
+            self._send_message(response_msg)
+        return
+
+
+class KyleGeorgeBot(Bot):
+    def on_receive_message(self, content):
+        status_msg = "Kyle George Bot running.\nEnv: {env}\nVersion: {version}".format(env=ENV,
+                                                                                      version=VERSION)
+        guarenteed_predefined = {'!status': status_msg}
+        generic_choices = ["All communists will be thrown out of helicopters.",
+                           "We should rescind universal suffrage.",
+                           "Taxation is theft.",
+                           "If I can't rig a grenade to my door as a 'home defense mechanism' then I ain't free.",
+                           "We must declare a thousand year fourth reich!",
+                           "Wanna go retake Constantinople?",
+                           "Shut up, you drugged up communist.",
+                           "You have violated the non-aggression principle. My recreational McNukes are inbound."]
+        generic_chance = 1
+                           
+        sender_type = content['sender_type']
+        if sender_type != "user":
+            return
+
+        if sender_id == "39008303":
+            return
+        msg = content['text']
+        for key in guarenteed_predefined:
+            if key.lower() in msg.lower():
+                self._send_message(guarenteed_predefined[key])
+                return
+        if random.randint(0,100) <= generic_chance:
+            response_msg = generic_choices[random.randint(0, len(generic_choices)-1)]
+            self._send_message(response_msg)
+            return
